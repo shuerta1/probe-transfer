@@ -1,5 +1,6 @@
 
 from pathlib import Path
+from decimal import Decimal, ROUND_HALF_UP
 
 import pandas as pd
 from sklearn.metrics import roc_auc_score
@@ -24,6 +25,16 @@ PUBLISHED = {
     "Qwen 14B": (0.702, 70, 42),
     "Qwen 32B": (0.840, 81, 29),
 }
+
+
+def round_half_up(value):
+    """Round a number to the nearest integer, with .5 rounding up."""
+    return int(
+        Decimal(str(value)).quantize(
+            Decimal("1"),
+            rounding=ROUND_HALF_UP
+        )
+    )
 
 
 def evaluate_model(model_name, file_prefix):
@@ -61,6 +72,7 @@ def evaluate_model(model_name, file_prefix):
 def main():
     results = []
 
+    # Evaluate all four models.
     for model_name, file_prefix in MODELS.items():
         result = evaluate_model(model_name, file_prefix)
         results.append(result)
@@ -76,9 +88,16 @@ def main():
         name = result["Model"]
         expected_auc, expected_recall, expected_fpr = PUBLISHED[name]
 
+        # Compare calculated metrics with published values.
         auc_match = abs(result["AUC"] - expected_auc) < 0.001
-        recall_match = round(result["Toxic Recall (%)"]) == expected_recall
-        fpr_match = round(result["False Positive (%)"]) == expected_fpr
+
+        recall_match = (
+            round_half_up(result["Toxic Recall (%)"]) == expected_recall
+        )
+
+        fpr_match = (
+            round_half_up(result["False Positive (%)"]) == expected_fpr
+        )
 
         status = "MATCH" if all([
             auc_match,
@@ -88,7 +107,7 @@ def main():
 
         print(f"{name}: {status}")
 
-    # Save our calculated results separately.
+    # Save the calculated results in our experiment directory.
     output_path = ROOT / "my-experiment" / "verified_table_b2.csv"
     results_df.to_csv(output_path, index=False)
 
