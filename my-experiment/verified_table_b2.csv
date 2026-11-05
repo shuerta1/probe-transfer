@@ -1,0 +1,5 @@
+Model,AUC,Toxic Recall (%),False Positive (%)
+Math 7B,0.747,66.6,28.5
+Llama 8B,0.669,59.4,35.3
+Qwen 14B,0.702,70.4,41.9
+Qwen 32B,0.84,81.1,28.9
